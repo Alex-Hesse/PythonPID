@@ -18,7 +18,10 @@ Developed with Python 3.12 [here](https://www.python.org/downloads/release/pytho
 
 ## Execution
 
-    python main.py
+    python autoTuner.py
+or
+
+    python pidController.py
     
 
 ## Responsible
