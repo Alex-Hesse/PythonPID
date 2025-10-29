@@ -41,7 +41,7 @@ autoapi_dirs = ['../../src']
 
 def post_process_html(app, exception):
     print("called 1")
-    toAdd ='<base href="/pythonPID/">'
+    toAdd ='<base href="/PythonPID/">'
     toSearch = '<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />'
     if exception is None and app.builder.name == 'html':
         with open(os.path.abspath(os.path.join("build", "index.html")), "r+", encoding='utf-8') as f:
