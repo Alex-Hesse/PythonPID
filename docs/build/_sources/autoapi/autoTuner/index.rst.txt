@@ -1,0 +1,64 @@
+autoTuner
+=========
+
+.. py:module:: autoTuner
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   autoTuner.pid
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   autoTuner.AdaptivePID
+
+
+Module Contents
+---------------
+
+.. py:class:: AdaptivePID(*args, tune_rate=0.01, error_threshold=0.05, **kwargs)
+
+   Bases: :py:obj:`PythonPID.src.pid_controller.PID_Controller`
+
+
+   PID controller that can automatically tune itself based on live response.
+
+
+   .. py:attribute:: _tune_rate
+      :value: 0.01
+
+
+
+   .. py:attribute:: _error_threshold
+      :value: 0.05
+
+
+
+   .. py:attribute:: _prev_error_sign
+      :value: None
+
+
+
+   .. py:attribute:: _oscillation_counter
+      :value: 0
+
+
+
+   .. py:method:: compute(current_value: float, target_value: float) -> float
+
+
+   .. py:method:: _auto_tune(current_value: float, target_value: float) -> None
+
+      Adjust gains based on live error trends.
+
+
+
+.. py:data:: pid
+

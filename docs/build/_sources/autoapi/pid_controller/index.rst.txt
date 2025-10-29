@@ -1,0 +1,123 @@
+pid_controller
+==============
+
+.. py:module:: pid_controller
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   pid_controller.pid
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   pid_controller.PID_Controller
+
+
+Module Contents
+---------------
+
+.. py:class:: PID_Controller(kp: float, ki: float, kd: float, min_output: float, max_output: float, tau: float = 0.02)
+
+   A simple PID (Proportional-Integral-Derivative) controller.
+
+   Attributes:
+       kp (float): Proportional gain
+       ki (float): Integral gain
+       kd (float): Derivative gain
+       min_output (float): Minimum output limit
+       max_output (float): Maximum output limit
+       tau (float): Derivative filter time constant (seconds)
+
+
+   .. py:attribute:: _kp
+
+
+   .. py:attribute:: _ki
+
+
+   .. py:attribute:: _kd
+
+
+   .. py:attribute:: _min_output
+
+
+   .. py:attribute:: _max_output
+
+
+   .. py:attribute:: _tau
+      :value: 0.02
+
+
+
+   .. py:attribute:: _last_error
+      :value: 0.0
+
+
+
+   .. py:attribute:: _last_time
+
+
+   .. py:attribute:: _integral
+      :value: 0.0
+
+
+
+   .. py:attribute:: _last_derivative
+      :value: 0.0
+
+
+
+   .. py:attribute:: _clamped
+      :value: False
+
+
+
+   .. py:method:: compute(current_value: float, target_value: float) -> float
+
+      Compute the control command based on the current and target values.
+
+      Args:
+          current_value (float): The current process variable.
+          target_value (float): The desired set point.
+
+      Returns:
+          float: The control command output.
+
+
+
+   .. py:method:: _apply_clamping(output: float, error: float) -> float
+
+      Clamp the PID output to the configured limits.
+      This will ensure that our integrator doesn't windup
+
+      Args:
+          output (float): The raw PID output.
+          error (float): The current error (for anti-windup logic).
+
+      Returns:
+          float: The clamped PID output.
+
+
+
+   .. py:method:: _filter_derivative(raw_derivative: float, dt: float) -> float
+
+      Apply a first-order low-pass filter to the derivative term.
+
+      Args:
+          raw_derivative (float): The unfiltered derivative value.
+          dt (float): Time step since last update.
+
+      Returns:
+          float: Filtered derivative value.
+
+
+
+.. py:data:: pid
+
