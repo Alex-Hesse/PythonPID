@@ -19,7 +19,7 @@ class PID_Controller:
         tau (float): Derivative filter time constant (seconds)
     """
 
-    def __init__(self, kp: float, ki: float, kd: float, min_output: float, max_output: float, tau: float = 0.02, ) -> None:
+    def __init__(self, kp: float, ki: float, kd: float, min_output: float, max_output: float, tau: float = 0.02, integrator_reset_delta: float = 1.0) -> None:
         # PID coefficients
         self._kp = kp
         self._ki = ki
@@ -31,12 +31,23 @@ class PID_Controller:
         
         # Derivative filter parameter
         self._tau = tau  # Higher tau = more smoothing, less noise, slower response
+        
+        self._integrator_reset_delta = integrator_reset_delta
+        # back calculation windup
+        self._k_aw = 0.90
+        
+        self._max_derivative = max_output * 0.2
+        self._min_derivative = min_output * 0.2
+        self._max_out_rate = (max_output - min_output) * 1.0
 
         # Internal state
         self._last_error = 0.0
         self._last_time = time.time()
         self._integral = 0.0
         self._last_derivative = 0.0
+        self._last_value = 0.0
+        self._last_target = 0.0
+        self._last_output = 0.0
         self._clamped = False
 
     def compute(self, current_value: float, target_value: float) -> float:
@@ -58,35 +69,58 @@ class PID_Controller:
 
         # Calculate error term
         error = target_value - current_value
+        
 
         # --- Proportional term ---
         p_term = self._kp * error
 
         # --- Integral term ---
+        
+        # reset integral if target has changed more then resetDelta
+        if abs(self._last_target - target_value) > self._integrator_reset_delta:
+            self._integral *= 0.5  # or = 0 for hard reset?
+        
+        # back calculation if min/max_output already reached to not integrate further
         if not self._clamped:
             self._integral += error * dt
         i_term = self._ki * self._integral
 
         # --- Derivative term (with low-pass filter) ---
-        derivative = (error - self._last_error) / dt
+        
+        # derivative on measurement
+        derivative = -(current_value - self._last_value) / dt
+        # derivative = (error - self._last_error) / dt  # spikes on target_value change
 
         # Filter derivative
-        derivative = self._filter_derivative(derivative, dt)
+        filtered_derivative = self._filter_derivative(derivative, dt)
+        
+        # clamp derivative protect noise / glitches
+        clamped_derivative = max(self._min_derivative, min(filtered_derivative, self._max_derivative))
 
-        d_term = self._kd * derivative
+        d_term = self._kd * clamped_derivative
 
         # Total PID output
         output = p_term + i_term + d_term
 
         # Clamp the output within limits
-        output = self._apply_clamping(output, error)
+        clamped_output = self._apply_clamping(output, error)
+        if self._clamped:
+            self._integral -= (output -clamped_output) * self._k_aw *dt
+            
+        # slew rate limiting
+        delta_output = clamped_output - self._last_output
+        if abs(delta_output) / dt > self._max_out_rate:
+            clamped_output = self._last_output + math.copysign(self._max_out_rate * dt, delta_output)    
 
         # Update internal state
         self._last_error = error
         self._last_time = current_time
         self._last_derivative = derivative
+        self._last_value = current_value
+        self._last_target = target_value
+        self._last_output = clamped_output
 
-        return output
+        return clamped_output
 
     def _apply_clamping(self, output: float, error: float) -> float:
         """
@@ -125,7 +159,7 @@ class PID_Controller:
 
         # Apply exponential smoothing
         filtered_derivative = (alpha * self._last_derivative + (1 - alpha) * raw_derivative)
-
+        
         return filtered_derivative
     
 
@@ -142,7 +176,7 @@ if __name__ == "__main__":
     print("Starting PID simulation...\n")
     print(f"{'Time':>6} | {'Target':>7} | {'Value':>7} | {'Command':>8}")
 
-    for step in range(200):
+    for step in range(1600):
         # Compute control output
         command = pid.compute(process_value, target)
 
